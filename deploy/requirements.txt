@@ -1,0 +1,3 @@
+alibabacloud-eci20180808
+alibabacloud-alidns20150109
+alibabacloud-tea-openapi
