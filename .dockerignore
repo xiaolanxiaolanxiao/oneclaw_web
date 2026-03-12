@@ -1,0 +1,7 @@
+node_modules
+chat-ui/ui/node_modules
+chat-ui/ui/dist
+dist
+.env
+.git
+.DS_Store
