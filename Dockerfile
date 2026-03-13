@@ -10,9 +10,9 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY chat-ui/ui/package.json ./chat-ui/ui/
 
-# First, install the gateway (openclaw) globally and patch the default Control UI behavior
+# First, install the gateway (openclaw) globally and patch the local pairing logic to allow remote token-based silent pairing
 RUN npm install -g openclaw@latest && \
-    sed -i 's/typeof crypto<"u"&&!!crypto.subtle/false/g' /usr/local/lib/node_modules/openclaw/dist/control-ui/assets/index-*.js
+    sed -i 's/return params.isLocalClient && (!params.hasBrowserOriginHeader || params.isControlUi || params.isWebchat)/return true/g' /usr/local/lib/node_modules/openclaw/dist/gateway-cli-*.js
 
 # Copy source code and build frontend
 COPY . .
