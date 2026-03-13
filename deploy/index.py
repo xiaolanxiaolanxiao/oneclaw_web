@@ -40,13 +40,13 @@ def handler(event, context):
             "mode": "local",
             "controlUi": {
                 "dangerouslyAllowHostHeaderOriginFallback": True,
-                "allowInsecureAuth": True
+                "allowInsecureAuth": True,
+                "dangerouslyDisableDeviceAuth": True
             },
             "auth": {
                 "mode": "token",
                 "token": GATEWAY_TOKEN
-            },
-            "pairingMethods": []
+            }
         },
         "agents": {
             "defaults": {

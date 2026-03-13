@@ -610,7 +610,20 @@ async function handleOpenWebUI(state: AppViewState) {
   }
 
   const token = state.settings.token.trim();
-  const query = token ? `?token=${encodeURIComponent(token)}` : "";
+  const params = new URLSearchParams();
+  if (token) {
+    params.set("token", token);
+  }
+  let wsUrl = state.settings.gatewayUrl;
+  if (!wsUrl) {
+    wsUrl = "ws://127.0.0.1:18789";
+  }
+  if (!wsUrl.endsWith("/ws")) {
+    wsUrl = wsUrl.replace(/\/$/, "") + "/ws";
+  }
+  params.set("gatewayUrl", wsUrl);
+
+  const query = params.toString() ? `?${params.toString()}` : "";
   const fullUrl = `${url.replace(/\/$/, "")}/${query}`;
 
   if (window.oneclaw?.openExternal) {
