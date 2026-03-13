@@ -12,7 +12,7 @@ GATEWAY_PID=$!
 
 echo "[Init] Starting Settings API bridge on port 5174..."
 cd /app/chat-ui/ui
-node api-server.js &
+node api-server.cjs &
 API_PID=$!
 
 echo "[Init] Starting Nginx for serving SPA and proxying..."
