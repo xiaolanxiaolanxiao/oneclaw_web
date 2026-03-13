@@ -110,13 +110,13 @@ chown -R 1000:1000 /openclaw-config
     )
 
     # ====================================================
-    # 1. OpenClaw 容器 (挂载配置卷 + 正确的启动命令)
+    # 1. OpenClaw Web 容器 (包含 Web UI + Gateway + Nginx)
     # ====================================================
     container_openclaw = eci_models.CreateContainerGroupRequestContainer(
-        name="openclaw", 
-        image='ghcr.nju.edu.cn/openclaw/openclaw:latest',
+        name="openclaw-web", 
+        image='crpi-71isp0aellmb4yns.cn-hangzhou.personal.cr.aliyuncs.com/oneclaw0312/oneclaw-web:v1',
         cpu=0.75, memory=1.5,
-        # 🌟 同时通过环境变量和配置文件双重注入，确保生效
+        # 🌟 同时通过环境变量注入
         environment_var=[
             eci_models.CreateContainerGroupRequestContainerEnvironmentVar(key='HOME', value='/home/node'),
             eci_models.CreateContainerGroupRequestContainerEnvironmentVar(key='TERM', value='xterm-256color'),
@@ -124,9 +124,7 @@ chown -R 1000:1000 /openclaw-config
             eci_models.CreateContainerGroupRequestContainerEnvironmentVar(key='OPENAI_BASE_URL', value=OPENAI_BASE_URL),
             eci_models.CreateContainerGroupRequestContainerEnvironmentVar(key='OPENAI_API_KEY', value=OPENAI_API_KEY),
         ],
-        # 🌟 正确的启动命令: 与官方 docker-compose.yml 一致
-        command=["node"],
-        arg=["dist/index.js", "gateway", "--bind", "lan", "--port", "18789"],
+        # 💥 移除 command 和 arg 覆盖，使用镜像内自带的 CMD ["/app/entrypoint.sh"] 来同时启动前、后端
         # 🌟 挂载 EmptyDir 到 ~/.openclaw/ 目录（可读写）
         volume_mount=[
             eci_models.CreateContainerGroupRequestContainerVolumeMount(
@@ -233,10 +231,10 @@ HB+swwmVc6pi93RFCubNFr4nbJIpfDmBwsdCcbQ3UMcQeXXi+Z2lJCw=
 -----END RSA PRIVATE KEY-----
 EOF
 
-# 🌟 Nginx 配置：HTTPS 反向代理，无需认证直接透传
+# 🌟 Nginx 配置：HTTPS 反向代理给内部 Web 和 Gateway
 cat << 'EOF' > /etc/nginx/conf.d/default.conf
 server {
-    listen 80;
+    # 💥 这里不可以监听 80，因为同 Pod 的 openclaw-web 的 Nginx 在监听 80 端口！
     listen 443 ssl;
     
     ssl_certificate /etc/nginx/cert.pem;
@@ -244,18 +242,17 @@ server {
     ssl_protocols TLSv1.2 TLSv1.3;
     
     location / {
-        proxy_pass http://127.0.0.1:18789; 
+        # 将流量转发给内部的 oneclaw-web 提供访问（端口 80）
+        proxy_pass http://127.0.0.1:80; 
+        
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         
-        proxy_set_header Host localhost:18789;
-        proxy_set_header Origin "http://localhost:18789";
-        
-        proxy_hide_header Access-Control-Allow-Origin;
-        add_header Access-Control-Allow-Origin $http_origin always;
-        proxy_hide_header Access-Control-Allow-Credentials;
-        add_header Access-Control-Allow-Credentials "true" always;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 EOF
