@@ -39,12 +39,14 @@ def handler(event, context):
         "gateway": {
             "mode": "local",
             "controlUi": {
-                "dangerouslyAllowHostHeaderOriginFallback": True
+                "dangerouslyAllowHostHeaderOriginFallback": True,
+                "allowInsecureAuth": True
             },
             "auth": {
                 "mode": "token",
                 "token": GATEWAY_TOKEN
-            }
+            },
+            "pairingMethods": []
         },
         "agents": {
             "defaults": {

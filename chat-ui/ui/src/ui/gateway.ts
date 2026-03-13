@@ -148,7 +148,14 @@ export class GatewayBrowserClient {
     // crypto.subtle is only available in secure contexts (HTTPS, localhost).
     // Over plain HTTP, we skip device identity and fall back to token-only auth.
     // Gateways may reject this unless gateway.controlUi.allowInsecureAuth is enabled.
-    const isSecureContext = typeof crypto !== "undefined" && !!crypto.subtle;
+    //
+    // 🌟 Web 部署模式（通过域名访问时），即使有 crypto.subtle 也跳过设备身份认证，
+    // 仅使用 Token 认证，避免 Gateway 检查设备配对导致 "pairing required" 错误。
+    const isWebDeployment = typeof window !== "undefined"
+      && window.location.protocol !== "file:"
+      && window.location.hostname !== "localhost"
+      && window.location.hostname !== "127.0.0.1";
+    const isSecureContext = !isWebDeployment && typeof crypto !== "undefined" && !!crypto.subtle;
 
     const scopes = ["operator.admin", "operator.approvals", "operator.pairing"];
     const role = "operator";
@@ -157,6 +164,7 @@ export class GatewayBrowserClient {
     let authToken = this.opts.token;
     console.debug("[gateway] begin sendConnect", {
       hasSecureContext: isSecureContext,
+      isWebDeployment,
       hasToken: Boolean(authToken),
       hasPassword: Boolean(this.opts.password),
       role,
