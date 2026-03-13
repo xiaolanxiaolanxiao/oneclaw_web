@@ -33,7 +33,7 @@ export function loadSettings(): UiSettings {
     }
     // 3) Browser deployment: derive from current page origin
     const proto = location.protocol === "https:" ? "wss" : "ws";
-    return `${proto}://${location.host}`;
+    return `${proto}://${location.host}/__openclaw__/ws`;
   })();
 
   // Default token from env var (for self-hosted / private deployments)

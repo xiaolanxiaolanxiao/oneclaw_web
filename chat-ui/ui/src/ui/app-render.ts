@@ -597,13 +597,15 @@ async function handleOpenWebUI(state: AppViewState) {
     return;
   }
   
-  // Use gateway URL from websocket client if connected, else fallback to 18789
-  let url = "http://127.0.0.1:18789";
-  if ((state as any).client?.url) {
+  // Use gateway URL from settings
+  let url = state.settings.gatewayUrl;
+  if (!url) {
+    url = "http://127.0.0.1:18789";
+  } else {
     try {
-      url = (state as any).client.url.replace(/^wss?:/i, "http:");
+      url = url.replace(/^wss?:/i, (m) => (m.toLowerCase() === "wss:" ? "https:" : "http:"));
       // Remove trailing ws path if present
-      url = url.replace(/\/__openclaw__\/ws\/?$/, "");
+      url = url.replace(/\/ws\/?$/, "");
     } catch { /* parse error ignored */ }
   }
 
