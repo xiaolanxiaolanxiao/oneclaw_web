@@ -104,5 +104,14 @@ export function loadSettings(): UiSettings {
 }
 
 export function saveSettings(next: UiSettings) {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const existing = JSON.parse(raw);
+      const merged = { ...existing, ...next };
+      localStorage.setItem(KEY, JSON.stringify(merged));
+      return;
+    }
+  } catch {}
   localStorage.setItem(KEY, JSON.stringify(next));
 }
